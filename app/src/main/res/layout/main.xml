@@ -9,12 +9,40 @@
         android:layout_marginTop="15dp"
         android:layout_gravity="top|center"
         />
-    <ImageButton
-        android:id="@+id/capture"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/ll"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center"
-        android:layout_marginBottom="15dp"
-        android:src="@drawable/capture"
-        />
+        android:orientation="horizontal"
+        android:layout_gravity="bottom"
+
+        >
+        <ImageButton
+            android:id="@+id/error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="15dp"
+            android:layout_weight="1"
+            android:src="@mipmap/error"
+            />
+        <ImageButton
+            android:id="@+id/capture"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="15dp"
+            android:src="@drawable/capture"
+            />
+        <ImageButton
+            android:id="@+id/save"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_marginBottom="15dp"
+            android:src="@mipmap/right"
+            />
+    </LinearLayout>
 </FrameLayout>

@@ -154,6 +154,8 @@ public class MainActivity extends MPermissionsActivity implements View.OnClickLi
             // 停止连续取景
             captureSession.stopRepeating();
             // 捕获静态图像
+            //captureSession.capture(captureRequestBuilder.build()
+            //        , new CameraCaptureSession.CaptureCallback()  // ⑤
             captureSession.capture(captureRequestBuilder.build()
                     , new CameraCaptureSession.CaptureCallback()  // ⑤
                     {
@@ -209,6 +211,20 @@ public class MainActivity extends MPermissionsActivity implements View.OnClickLi
     {
         try
         {
+            /**
+             * SurfaceTexture是从Android3.0（API 11）加入的一个新类。这个类跟SurfaceView很像，
+             * 可以从camera preview或者video decode里面获取图像流（image stream）。但是，和SurfaceView不同的是，
+             * SurfaceTexture在接收图像流之后，不需要显示出来。有做过Android camera开发的人都知道，比较头疼的一个问题就是，
+             * 从camera读取到的预览（preview）图像流一定要输出到一个可见的（Visible）SurfaceView上，然后通过Camera.PreviewCallback的
+             * public void onPreviewFrame(byte[] data, Camera camera)函数来获得图像帧数据的拷贝。
+             * 这就存在一个问题，比如我希望隐藏摄像头的预览图像或者对每一帧进行一些处理再显示到手机显示屏上，
+             * 那么在Android3.0之前是没有办法做到的，或者说你需要用一些小技巧，比如用其他控件把SurfaceView给挡住，
+             * 注意这个显示原始camera图像流的SurfaceView其实是依然存在的，也就是说被挡住的SurfaceView依然在接收从camera传过来的图像，
+             * 而且一直按照一定帧率去刷新，这是消耗cpu的，而且如果一些参数设置的不恰当，后面隐藏的SurfaceView有可能会露出来，
+             * 因此这些小技巧并不是好办法。但是，有了SurfaceTexture之后，就好办多了，因为SurfaceTexture不需要显示到屏幕上，
+             * 因此我们可以用SurfaceTexture接收来自camera的图像流，然后从SurfaceTexture中取得图像帧的拷贝进行处理，处理完毕后再送给另一个SurfaceView用于显示即可。
+             *
+             */
             SurfaceTexture texture = textureView.getSurfaceTexture();
             texture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
             Surface surface = new Surface(texture);
