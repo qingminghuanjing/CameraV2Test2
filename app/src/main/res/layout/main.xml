@@ -4,73 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     >
-    <com.example.asus.camerav2test.AutoFitTextureView
-        android:id="@+id/texture"
-        android:layout_width="300dp"
-        android:layout_height="400dp"
-        android:layout_marginTop="15dp"
-        android:layout_gravity="top|center"
+    <ImageButton
+        android:id="@+id/play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center"
+        android:layout_marginBottom="15dp"
+        android:layout_weight="1"
+        android:src="@mipmap/play"
+        android:visibility="visible"
         />
-    <LinearLayout
-        android:id="@+id/ll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="bottom"
-        >
-    <LinearLayout
-        android:id="@+id/ll2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="bottom"
-        >
-        <ImageButton
-            android:id="@+id/change"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:src="@mipmap/change"
-            />
-    </LinearLayout>
-    <LinearLayout
-        android:id="@+id/ll3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_gravity="bottom"
-
-
-        >
-        <ImageButton
-            android:id="@+id/error"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            android:layout_marginBottom="15dp"
-            android:layout_weight="1"
-            android:src="@mipmap/error"
-            android:visibility="invisible"
-            />
-        <ImageButton
-            android:id="@+id/capture"
-            android:layout_weight="1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            android:layout_marginBottom="15dp"
-            android:src="@drawable/capture"
-            />
-        <ImageButton
-            android:id="@+id/save"
-            android:layout_weight="1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            android:layout_marginBottom="15dp"
-            android:visibility="invisible"
-            android:src="@mipmap/right"
-            />
-        </LinearLayout>
-    </LinearLayout>
 </LinearLayout>
