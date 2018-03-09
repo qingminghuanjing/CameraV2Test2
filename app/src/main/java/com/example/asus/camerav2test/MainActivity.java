@@ -22,6 +22,7 @@ import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import java.io.File;
@@ -49,6 +50,13 @@ public class MainActivity extends MPermissionsActivity implements View.OnClickLi
     private AutoFitTextureView textureView;
     // 摄像头ID（通常0代表后置摄像头，1代表前置摄像头）
     private String mCameraId = "0";
+    private ImageButton change;//用于后置摄像头和前置摄像头的转换
+    private ImageButton error;//用于取消保存图片，并且再次打开连续取景模式
+    private ImageButton right;//用于保存图片，并且再次打开连续取景模式
+    Image image;//用于存放从摄像头中采集到的图片
+    File file;//用于定义文件以及文件的存储位置
+    byte[] bytes;//用于存储图片数据
+
     // 定义代表摄像头的成员变量
     private CameraDevice cameraDevice;
     // 预览尺寸
@@ -119,12 +127,85 @@ public class MainActivity extends MPermissionsActivity implements View.OnClickLi
         // 为该组件设置监听器
         textureView.setSurfaceTextureListener(mSurfaceTextureListener);
         findViewById(R.id.capture).setOnClickListener(this);
+        change=(ImageButton) findViewById(R.id.change);
+        error=(ImageButton) findViewById(R.id.error);
+        right= (ImageButton) findViewById(R.id.save);
+        //为right控件添加一个转换摄像头的方法，当点击切换的时候，会在前置摄像头和后置摄像头之间进行切换。
+        change.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCameraId=="0"){
+                    mCameraId = "1";
+                }else{
+                    mCameraId="0";
+                }
+                right.setVisibility(View.INVISIBLE);
+                error.setVisibility(View.INVISIBLE);
+                CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);//得到camera的控制管理类
+                try
+                {
+                    // 打开摄像头
+                    cameraDevice.close();//由于该应用会在打开时自动打开摄像头，严格说是TextureView准备好时会打开摄像头，所以需要将摄像头关闭，然后再重新打开另一个摄像头
+                    MainActivity.this.cameraDevice = null;
+                    requestPermission(new String[]{Manifest.permission.CAMERA},0x003);
+                    checkPermission(Manifest.permission.CAMERA,1,3);
+                    manager.openCamera(mCameraId, stateCallback, null); // ①
+                }
+                catch (CameraAccessException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        });
+        error.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //重新打开循环取景模式，并设置好各个参数
+                try{
+                    captureSession.setRepeatingRequest(previewRequest, null, null);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                right.setVisibility(View.INVISIBLE);
+                error.setVisibility(View.INVISIBLE);
+            }
+        });
+        right.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try (
+                        FileOutputStream output = new FileOutputStream(file))
+                {
+                    output.write(bytes);
+                    Toast.makeText(MainActivity.this, "保存: "
+                            + file, Toast.LENGTH_SHORT).show();
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                finally
+                {
+                    image.close();
+                }
+                try{
+                    captureSession.setRepeatingRequest(previewRequest, null, null);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+                right.setVisibility(View.INVISIBLE);
+                error.setVisibility(View.INVISIBLE);
+            }
+        });
+
     }
 
     @Override
     public void onClick(View view)
     {
         captureStillPicture();
+        error.setVisibility(View.VISIBLE);
+        right.setVisibility(View.VISIBLE);
     }
 
     private void captureStillPicture()
@@ -173,8 +254,8 @@ public class MainActivity extends MPermissionsActivity implements View.OnClickLi
                                 previewRequestBuilder.set(CaptureRequest.CONTROL_AE_MODE,
                                         CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH);
                                 // 打开连续取景模式
-                                captureSession.setRepeatingRequest(previewRequest, null,
-                                        null);
+                                captureSession.stopRepeating();
+                                //captureSession.setRepeatingRequest(previewRequest, null, null);
                             }
                             catch (CameraAccessException e)
                             {
@@ -192,12 +273,13 @@ public class MainActivity extends MPermissionsActivity implements View.OnClickLi
     // 打开摄像头
     private void openCamera(int width, int height)
     {
-        setUpCameraOutputs(width, height);
+        requestPermission(new String[]{Manifest.permission.CAMERA},0x003);
+        setUpCameraOutputs(width, height);//感觉这个方法应该放在请求权限之后，否则在启动应用后可能会直接崩溃掉
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try
         {
             // 打开摄像头
-            requestPermission(new String[]{Manifest.permission.CAMERA},0x003);
+
             checkPermission(Manifest.permission.CAMERA,1,3);
             manager.openCamera(mCameraId, stateCallback, null); // ①
         }
@@ -310,27 +392,13 @@ public class MainActivity extends MPermissionsActivity implements View.OnClickLi
                         public void onImageAvailable(ImageReader reader)
                         {
                             // 获取捕获的照片数据
-                            Image image = reader.acquireNextImage();
+                            image = reader.acquireNextImage();
                             ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                            byte[] bytes = new byte[buffer.remaining()];
+                            bytes = new byte[buffer.remaining()];
                             // 使用IO流将照片写入指定文件
-                            File file = new File(getExternalFilesDir(null), "pic.jpg");
+                            file = new File(getExternalFilesDir(null), "pic.jpg");
                             buffer.get(bytes);
-                            try (
-                                    FileOutputStream output = new FileOutputStream(file))
-                            {
-                                output.write(bytes);
-                                Toast.makeText(MainActivity.this, "保存: "
-                                        + file, Toast.LENGTH_SHORT).show();
-                            }
-                            catch (Exception e)
-                            {
-                                e.printStackTrace();
-                            }
-                            finally
-                            {
-                                image.close();
-                            }
+
                         }
                     }, null);
 
