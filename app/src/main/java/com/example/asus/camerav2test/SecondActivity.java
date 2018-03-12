@@ -1,5 +1,6 @@
 package com.example.asus.camerav2test;
 
+import android.util.Log;
 import android.view.View;
 import android.Manifest;
 import android.content.Context;
@@ -38,11 +39,16 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static android.R.attr.tag;
+
 /**
  * Created by ASUS on 2018/3/9.
  */
 
 public class SecondActivity extends MPermissionsActivity implements View.OnClickListener{
+
+
+
 
         private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
@@ -89,7 +95,7 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
     }
     private AutoFitTextureView textureView;
     // 摄像头ID（通常0代表后置摄像头，1代表前置摄像头）
-    private String mCameraId = "0";
+    private String mCameraId = "1";
     private ImageButton change;//用于后置摄像头和前置摄像头的转换
     private ImageButton error;//用于取消保存图片，并且再次打开连续取景模式
     private ImageButton right;//用于保存图片，并且再次打开连续取景模式
@@ -163,6 +169,10 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.second);
+        //首先获取由第一个activity中传递过来的photoObj对象
+        PhotoObj photoObj=(PhotoObj)getIntent().getSerializableExtra("photoObj");
+        //Log.e("消息", photoObj.getRejectMsg());//测试对象是否获取成功
+        mCameraId=photoObj.getmCameraId();
         textureView = (AutoFitTextureView) findViewById(R.id.texture);
         // 为该组件设置监听器
         textureView.setSurfaceTextureListener(mSurfaceTextureListener);

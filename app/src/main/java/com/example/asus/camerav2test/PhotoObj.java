@@ -1,10 +1,13 @@
 package com.example.asus.camerav2test;
 
+import java.io.Serializable;
+
 /**
  * Created by 朱凤杰 on 2018/3/9.
  */
 
-public class PhotoObj {
+public class PhotoObj implements Serializable {//实现序列化，用于两个activity之间进行传递
+    private static final long serialVersionUID = 9060527069391618394L;
     private boolean cancelable;
     private int heightPx;
     private int widthPx;
@@ -15,10 +18,11 @@ public class PhotoObj {
     private boolean useFrontCam;
     private boolean monoPic;
     private TipsConfig tipsConfig;
+    private String mCameraId;
 
     public PhotoObj(boolean cancelable, int heightPx, int widthPx, int quality,
                         boolean openFaceDetection, boolean forceRejectWhenNoFaces, String rejectMsg,
-                                boolean useFrontCam, boolean monoPic, TipsConfig tipsConfig) {
+                                boolean useFrontCam, boolean monoPic, TipsConfig tipsConfig, String mCameraId) {
         this.cancelable = cancelable;
         this.heightPx = heightPx;
         this.widthPx = widthPx;
@@ -29,6 +33,7 @@ public class PhotoObj {
         this.useFrontCam = useFrontCam;
         this.monoPic = monoPic;
         this.tipsConfig = tipsConfig;
+        this.mCameraId = mCameraId;
     }
 
     public boolean isCancelable() {
@@ -109,5 +114,13 @@ public class PhotoObj {
 
     public void setTipsConfig(TipsConfig tipsConfig) {
         this.tipsConfig = tipsConfig;
+    }
+
+    public String getmCameraId() {
+        return mCameraId;
+    }
+
+    public void setmCameraId(String mCameraId) {
+        this.mCameraId = mCameraId;
     }
 }

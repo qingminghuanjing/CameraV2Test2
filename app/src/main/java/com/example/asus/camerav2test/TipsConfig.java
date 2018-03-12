@@ -1,10 +1,12 @@
 package com.example.asus.camerav2test;
 
+import java.io.Serializable;
+
 /**
  * Created by 朱凤杰 on 2018/3/9.
  */
 
-public class TipsConfig {
+public class TipsConfig implements Serializable{
     private String msg;
     private int color;
     private int msgSize;
