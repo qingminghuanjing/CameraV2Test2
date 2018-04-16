@@ -1,5 +1,8 @@
 package com.example.asus.camerav2test;
 
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.View;
 import android.Manifest;
@@ -45,35 +48,32 @@ import static android.R.attr.tag;
  * Created by ASUS on 2018/3/9.
  */
 
-public class SecondActivity extends MPermissionsActivity implements View.OnClickListener{
+public class SecondActivity extends MPermissionsActivity implements View.OnClickListener {
 
 
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
 
-        private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    // 定义一个变量，来标识是否退出
+    private static boolean isExit = false;
 
-        static
-        {
-            ORIENTATIONS.append(Surface.ROTATION_0, 90);
-            ORIENTATIONS.append(Surface.ROTATION_90, 0);
-            ORIENTATIONS.append(Surface.ROTATION_180, 270);
-            ORIENTATIONS.append(Surface.ROTATION_270, 180);
-        }
-
-        // 定义一个变量，来标识是否退出
-        private static boolean isExit = false;
-
-        Handler mHandler = new Handler() {
-
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                isExit = false;
-            }
-        };
+    Handler mHandler = new Handler() {
 
         @Override
-        public boolean onKeyDown(int keyCode, KeyEvent event) {
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            isExit = false;
+        }
+    };
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             exit();
             return false;
@@ -93,6 +93,7 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
             System.exit(0);
         }
     }
+
     private AutoFitTextureView textureView;
     // 摄像头ID（通常0代表后置摄像头，1代表前置摄像头）
     private String mCameraId = "1";
@@ -102,6 +103,7 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
     Image image;//用于存放从摄像头中采集到的图片
     File file;//用于定义文件以及文件的存储位置
     byte[] bytes;//用于存储图片数据
+
 
     // 定义代表摄像头的成员变量
     private CameraDevice cameraDevice;
@@ -114,50 +116,47 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
     private CameraCaptureSession captureSession;
     private ImageReader imageReader;
     private final TextureView.SurfaceTextureListener mSurfaceTextureListener
-            = new TextureView.SurfaceTextureListener()
-    {
+            = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture texture
-                , int width, int height)
-        {
+                , int width, int height) {
             // 当TextureView可用时，打开摄像头
             openCamera(width, height);
         }
 
         @Override
         public void onSurfaceTextureSizeChanged(SurfaceTexture texture
-                , int width, int height){ }
+                , int width, int height) {
+        }
 
         @Override
-        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture)
-        {
+        public boolean onSurfaceTextureDestroyed(SurfaceTexture texture) {
             return true;
         }
 
         @Override
-        public void onSurfaceTextureUpdated(SurfaceTexture texture){}
+        public void onSurfaceTextureUpdated(SurfaceTexture texture) {
+        }
     };
-    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback()
-    {
+    private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
         //  摄像头被打开时激发该方法
         @Override
-        public void onOpened(CameraDevice cameraDevice)
-        {
+        public void onOpened(CameraDevice cameraDevice) {
             SecondActivity.this.cameraDevice = cameraDevice;
             // 开始预览
             createCameraPreviewSession();  // ②
         }
+
         // 摄像头断开连接时激发该方法
         @Override
-        public void onDisconnected(CameraDevice cameraDevice)
-        {
+        public void onDisconnected(CameraDevice cameraDevice) {
             cameraDevice.close();
             SecondActivity.this.cameraDevice = null;
         }
+
         // 打开摄像头出现错误时激发该方法
         @Override
-        public void onError(CameraDevice cameraDevice, int error)
-        {
+        public void onError(CameraDevice cameraDevice, int error) {
             cameraDevice.close();
             SecondActivity.this.cameraDevice = null;
             SecondActivity.this.finish();
@@ -165,50 +164,48 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
     };
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.second);
         //首先获取由第一个activity中传递过来的photoObj对象
-        PhotoObj photoObj=(PhotoObj)getIntent().getSerializableExtra("photoObj");
+
+        PhotoObj photoObj = (PhotoObj) getIntent().getSerializableExtra("photoObj");
         //Log.e("消息", photoObj.getRejectMsg());//测试对象是否获取成功
-        mCameraId=photoObj.getmCameraId();
+        mCameraId = photoObj.getmCameraId();
         textureView = (AutoFitTextureView) findViewById(R.id.texture);
         // 为该组件设置监听器
         textureView.setSurfaceTextureListener(mSurfaceTextureListener);
         findViewById(R.id.capture).setOnClickListener(this);
-        change=(ImageButton) findViewById(R.id.change);
-        error=(ImageButton) findViewById(R.id.error);
-        right= (ImageButton) findViewById(R.id.save);
+        change = (ImageButton) findViewById(R.id.change);
+        error = (ImageButton) findViewById(R.id.error);
+        right = (ImageButton) findViewById(R.id.save);
 
         listenerCollect();
 
     }
+
     //一些按键的监听器
-    public void listenerCollect(){
+    public void listenerCollect() {
         //为right控件添加一个转换摄像头的方法，当点击切换的时候，会在前置摄像头和后置摄像头之间进行切换。
         change.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mCameraId=="0"){
+                if (mCameraId == "0") {
                     mCameraId = "1";
-                }else{
-                    mCameraId="0";
+                } else {
+                    mCameraId = "0";
                 }
                 right.setVisibility(View.INVISIBLE);
                 error.setVisibility(View.INVISIBLE);
                 CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);//得到camera的控制管理类
-                try
-                {
+                try {
                     // 打开摄像头
                     cameraDevice.close();//由于该应用会在打开时自动打开摄像头，严格说是TextureView准备好时会打开摄像头，所以需要将摄像头关闭，然后再重新打开另一个摄像头
                     SecondActivity.this.cameraDevice = null;
-                    requestPermission(new String[]{Manifest.permission.CAMERA},0x003);
-                    checkPermission(Manifest.permission.CAMERA,1,3);
+                    requestPermission(new String[]{Manifest.permission.CAMERA}, 0x003);
+                    checkPermission(Manifest.permission.CAMERA, 1, 3);
                     manager.openCamera(mCameraId, stateCallback, null); // ①
-                }
-                catch (CameraAccessException e)
-                {
+                } catch (CameraAccessException e) {
                     e.printStackTrace();
                 }
             }
@@ -217,9 +214,10 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
             @Override
             public void onClick(View v) {
                 //重新打开循环取景模式，并设置好各个参数
-                try{
+                try {
+                    image = null;
                     captureSession.setRepeatingRequest(previewRequest, null, null);
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 right.setVisibility(View.INVISIBLE);
@@ -229,24 +227,33 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
         right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try (
-                        FileOutputStream output = new FileOutputStream(file))
-                {
+                try {
+                    FileOutputStream output = new FileOutputStream(file);
                     output.write(bytes);
                     Toast.makeText(SecondActivity.this, "保存: "
                             + file, Toast.LENGTH_SHORT).show();
-                }
-                catch (Exception e)
-                {
+                    Intent intent1 = new Intent();
+                    Bundle mBundle1 = new Bundle();
+                    Log.e("图片信息长度", bytes.length + "");
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    Log.e("图片信息", bitmap.toString());
+                    mBundle1.putParcelable("bitmap", bitmap);
+                    intent1.putExtras(mBundle1);
+                    Log.e("图片信息长度", bytes.length + "");
+
+                    setResult(12, intent1);
+                    //startActivity(intent1);
+
+                } catch (Exception e) {
+                    System.out.println(">>>>>>>" + e.toString());
                     e.printStackTrace();
-                }
-                finally
-                {
+                } finally {
                     image.close();
+                    finish();
                 }
-                try{
+                try {
                     captureSession.setRepeatingRequest(previewRequest, null, null);
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 right.setVisibility(View.INVISIBLE);
@@ -256,19 +263,15 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
     }
 
     @Override
-    public void onClick(View view)
-    {
+    public void onClick(View view) {
         captureStillPicture();
         error.setVisibility(View.VISIBLE);
         right.setVisibility(View.VISIBLE);
     }
 
-    private void captureStillPicture()
-    {
-        try
-        {
-            if (cameraDevice == null)
-            {
+    private void captureStillPicture() {
+        try {
+            if (cameraDevice == null) {
                 return;
             }
             // 创建作为拍照的CaptureRequest.Builder
@@ -298,10 +301,8 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
                         // 拍照完成时激发该方法
                         @Override
                         public void onCaptureCompleted(CameraCaptureSession session
-                                , CaptureRequest request, TotalCaptureResult result)
-                        {
-                            try
-                            {
+                                , CaptureRequest request, TotalCaptureResult result) {
+                            try {
                                 // 重设自动对焦模式
                                 previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                                         CameraMetadata.CONTROL_AF_TRIGGER_CANCEL);
@@ -311,43 +312,33 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
                                 // 打开连续取景模式
                                 captureSession.stopRepeating();
                                 //captureSession.setRepeatingRequest(previewRequest, null, null);
-                            }
-                            catch (CameraAccessException e)
-                            {
+                            } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
                         }
                     }, null);
-        }
-        catch (CameraAccessException e)
-        {
+        } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
 
     // 打开摄像头
-    private void openCamera(int width, int height)
-    {
-        requestPermission(new String[]{Manifest.permission.CAMERA},0x003);
+    private void openCamera(int width, int height) {
+        requestPermission(new String[]{Manifest.permission.CAMERA}, 0x003);
         setUpCameraOutputs(width, height);//感觉这个方法应该放在请求权限之后，否则在启动应用后可能会直接崩溃掉
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        try
-        {
+        try {
             // 打开摄像头
 
-            checkPermission(Manifest.permission.CAMERA,1,3);
+            checkPermission(Manifest.permission.CAMERA, 1, 3);
             manager.openCamera(mCameraId, stateCallback, null); // ①
-        }
-        catch (CameraAccessException e)
-        {
+        } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
 
-    private void createCameraPreviewSession()
-    {
-        try
-        {
+    private void createCameraPreviewSession() {
+        try {
             /**
              * SurfaceTexture是从Android3.0（API 11）加入的一个新类。这个类跟SurfaceView很像，
              * 可以从camera preview或者video decode里面获取图像流（image stream）。但是，和SurfaceView不同的是，
@@ -375,18 +366,15 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
                     , imageReader.getSurface()), new CameraCaptureSession.StateCallback() // ③
                     {
                         @Override
-                        public void onConfigured(CameraCaptureSession cameraCaptureSession)
-                        {
+                        public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                             // 如果摄像头为null，直接结束方法
-                            if (null == cameraDevice)
-                            {
+                            if (null == cameraDevice) {
                                 return;
                             }
 
                             // 当摄像头已经准备好时，开始显示预览
                             captureSession = cameraCaptureSession;
-                            try
-                            {
+                            try {
                                 // 设置自动对焦模式
                                 previewRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE,
                                         CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
@@ -398,33 +386,26 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
                                 // 设置预览时连续捕获图像数据
                                 captureSession.setRepeatingRequest(previewRequest,
                                         null, null);  // ④
-                            }
-                            catch (CameraAccessException e)
-                            {
+                            } catch (CameraAccessException e) {
                                 e.printStackTrace();
                             }
                         }
 
                         @Override
-                        public void onConfigureFailed(CameraCaptureSession cameraCaptureSession)
-                        {
+                        public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
                             Toast.makeText(SecondActivity.this, "配置失败！"
                                     , Toast.LENGTH_SHORT).show();
                         }
                     }, null
             );
-        }
-        catch (CameraAccessException e)
-        {
+        } catch (CameraAccessException e) {
             e.printStackTrace();
         }
     }
 
-    private void setUpCameraOutputs(int width, int height)
-    {
+    private void setUpCameraOutputs(int width, int height) {
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        try
-        {
+        try {
             // 获取指定摄像头的特性
             CameraCharacteristics characteristics
                     = manager.getCameraCharacteristics(mCameraId);
@@ -440,12 +421,10 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
             imageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
                     ImageFormat.JPEG, 2);
             imageReader.setOnImageAvailableListener(
-                    new ImageReader.OnImageAvailableListener()
-                    {
+                    new ImageReader.OnImageAvailableListener() {
                         // 当照片数据可用时激发该方法
                         @Override
-                        public void onImageAvailable(ImageReader reader)
-                        {
+                        public void onImageAvailable(ImageReader reader) {
                             // 获取捕获的照片数据
                             image = reader.acquireNextImage();
                             ByteBuffer buffer = image.getPlanes()[0].getBuffer();
@@ -462,66 +441,52 @@ public class SecondActivity extends MPermissionsActivity implements View.OnClick
                     SurfaceTexture.class), width, height, largest);
             // 根据选中的预览尺寸来调整预览组件（TextureView的）的长宽比
             int orientation = getResources().getConfiguration().orientation;
-            if (orientation == Configuration.ORIENTATION_LANDSCAPE)
-            {
+            if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 textureView.setAspectRatio(
                         previewSize.getWidth(), previewSize.getHeight());
-            }
-            else
-            {
+            } else {
                 textureView.setAspectRatio(
                         previewSize.getHeight(), previewSize.getWidth());
             }
-        }
-        catch (CameraAccessException e)
-        {
+        } catch (CameraAccessException e) {
             e.printStackTrace();
-        }
-        catch (NullPointerException e)
-        {
+        } catch (NullPointerException e) {
             System.out.println("出现错误。");
         }
     }
 
     private static Size chooseOptimalSize(Size[] choices
-            , int width, int height, Size aspectRatio)
-    {
+            , int width, int height, Size aspectRatio) {
         // 收集摄像头支持的打过预览Surface的分辨率
         List<Size> bigEnough = new ArrayList<>();
         int w = aspectRatio.getWidth();
         int h = aspectRatio.getHeight();
-        for (Size option : choices)
-        {
+        for (Size option : choices) {
             if (option.getHeight() == option.getWidth() * h / w &&
-                    option.getWidth() >= width && option.getHeight() >= height)
-            {
+                    option.getWidth() >= width && option.getHeight() >= height) {
                 bigEnough.add(option);
             }
         }
         // 如果找到多个预览尺寸，获取其中面积最小的。
-        if (bigEnough.size() > 0)
-        {
+        if (bigEnough.size() > 0) {
             return Collections.min(bigEnough, new CompareSizesByArea());
-        }
-        else
-        {
+        } else {
             System.out.println("找不到合适的预览尺寸！！！");
             return choices[0];
         }
     }
 
     // 为Size定义一个比较器Comparator
-    static class CompareSizesByArea implements Comparator<Size>
-    {
+    static class CompareSizesByArea implements Comparator<Size> {
         @Override
-        public int compare(Size lhs, Size rhs)
-        {
+        public int compare(Size lhs, Size rhs) {
             // 强转为long保证不会发生溢出
             return Long.signum((long) lhs.getWidth() * lhs.getHeight() -
                     (long) rhs.getWidth() * rhs.getHeight());
         }
     }
-    public void takePicture(PhotoObj photoObj){
+
+    public void takePicture(PhotoObj photoObj) {
         System.out.print("调用拍照方法成功");
     }
 }
